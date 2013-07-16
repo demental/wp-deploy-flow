@@ -23,7 +23,7 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 			return;
 		}
 
-		$siteurl = self::_trim_url( get_option( 'siteurl' ) );
+		$siteurl = get_option( 'siteurl' );
 
 		$commands = array(
 			array( 'wp db export db_bk.sql', true ),
