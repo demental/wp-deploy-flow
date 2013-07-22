@@ -141,7 +141,7 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 		$out['db_user'] = escapeshellarg( $out['db_user'] );
 		$out['db_host'] = escapeshellarg( $out['db_host'] );
 		$out['db_password'] = escapeshellarg( $out['db_password'] );
-		$out['ssh_port'] = ( isset($out['ssh_port']) ) ? escapeshellarg( $out['ssh_port']) : 22;
+		$out['ssh_port'] = ( isset($out['ssh_port']) ) ? intval( $out['ssh_port']) : 22;
 
 		if ( $out['ssh_db_host'] && $tunnel ) {
 			$com = sprintf( 'ssh -f -L 3310:127.0.01:%s %s@%s sleep 600 >> logfile', ( $out['db_port'] ? $out['db_port'] : 3306 ), $out['ssh_db_user'], escapeshellarg( $out['ssh_db_host'] ) );
