@@ -17,6 +17,8 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 	 */
 	public function push( $args = array() ) {
 
+    $commands = array();
+
 		extract( self::_prepare_and_extract( $args, false ) );
 		if ( $locked === true ) {
 			WP_CLI::error( "$env environment is locked, you cannot push to it" );
@@ -24,20 +26,19 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 		}
 
 		$siteurl = get_option( 'siteurl' );
+    $this->commands_for_database_dump(
+      array($siteurl => $url, untrailingslashit( ABSPATH ) => untrailingslashit( $path )),
+      $commands
+    );
 
-		$commands = array(
-			array( 'wp db export db_bk.sql', true ),
-			array( "wp search-replace $siteurl $url", true ),
-			array( 'wp search-replace ' . untrailingslashit( ABSPATH ) . ' ' . untrailingslashit( $path ), true ),
-			array( 'wp db dump dump.sql', true ),
+    if($ssh_db_host) {
+      $this->commands_for_database_import_thru_ssh($args, $commands);
+    } else {
+      $this->commands_for_database_import_locally($args, $commands);
+    }
 
-			array( 'wp db import db_bk.sql', true ),
-			array( 'rm db_bk.sql', true ),
+    $commands[]= array('rm dump.sql', true);
 
-			array( "scp -P $ssh_port dump.sql $ssh_db_user@$ssh_db_host:$ssh_db_path", true ),
-			array( "ssh $ssh_db_user@$ssh_db_host -p $ssh_port \"cd $ssh_db_path; mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql; rm dump.sql\"", true ),
-			array( 'rm dump.sql', true ),
-		);
 
 		foreach ( $commands as $command_info ) {
 			list( $command, $exit_on_error ) = $command_info;
@@ -62,6 +63,30 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 
 	}
 
+  protected function commands_for_database_import_thru_ssh($args, &$commands)
+  {
+		extract( self::_prepare_and_extract( $args, false ) );
+		$commands[]= array( "scp -P $ssh_port dump.sql $ssh_db_user@$ssh_db_host:$ssh_db_path", true );
+		$commands[]= array( "ssh $ssh_db_user@$ssh_db_host -p $ssh_port \"cd $ssh_db_path; mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql; rm dump.sql\"", true );
+  }
+
+  protected function commands_for_database_import_locally($args, &$commands)
+  {
+		extract( self::_prepare_and_extract( $args, false ) );
+		$commands[]= array( "mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql;", true );
+  }
+
+  protected function commands_for_database_dump($searchreplaces, &$commands) {
+    $commands = array(
+      array( 'wp db export db_bk.sql', true ),
+    );
+    foreach($searchreplaces as $search => $replace) {
+      $commands[]= array( "wp search-replace $search $replace", true );
+    }
+    $commands[]= array( 'wp db dump dump.sql', true );
+    $commands[]= array( 'wp db import db_bk.sql', true );
+    $commands[]= array( 'rm db_bk.sql', true );
+  }
 	public function push_files( $args = array() ) {
 		extract( self::_prepare_and_extract( $args, false ) );
 		if ( $locked === true ) {
@@ -109,7 +134,7 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 		if ( constant( $const ) === true ) {
 			return WP_CLI::error( ENVIRONMENT . ' env is locked, you can not pull to your local copy' );
 		}
-		
+
 		$host = $db_host.':'.$db_port;
 
 		if ( $ssh_host ) {
