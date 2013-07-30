@@ -46,12 +46,6 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 			WP_CLI::launch( $command, $exit_on_error );
 		}
 
-		if ( $remove_admin === true ) {
-			$com = "ssh $ssh_user@$ssh_host -p $ssh_port \"cd $path;rm -Rf wp-login.php\"";
-			WP_CLI::line( $com );
-			WP_CLI::launch( $com );
-		}
-
 		self::push_files( $args );
 		$const = strtoupper( $env ) . '_POST_SCRIPT';
 		if ( defined( $const ) ) {
