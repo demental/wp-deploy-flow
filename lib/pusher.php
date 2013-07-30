@@ -36,11 +36,14 @@ class WP_Deploy_Flow_Pusher {
 
 		$remote_path = $path . '/';
 		$local_path = ABSPATH;
-    $excludes = array(
-      '.git',
-      'wp-content/cache',
-      'wp-content/_wpremote_backups',
-      'wp-config.php',
+    $excludes = array_merge(
+      $excludes,
+      array(
+        '.git',
+        'wp-content/cache',
+        'wp-content/_wpremote_backups',
+        'wp-config.php',
+      )
     );
     if(!$ssh_host) {
        // in case the destination env is in a subfolder of the source env, we exclude the relative path to the destination to avoid infinite loop

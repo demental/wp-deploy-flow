@@ -111,6 +111,7 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 		$out['db_host'] = escapeshellarg( $out['db_host'] );
 		$out['db_password'] = escapeshellarg( $out['db_password'] );
 		$out['ssh_port'] = ( isset($out['ssh_port']) ) ? escapeshellarg( $out['ssh_port']) : 22;
+    $out['excludes'] = explode(':', $out['excludes']);
 		return $out;
 	}
 
@@ -132,7 +133,7 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 
 	protected static function config_constants_to_array() {
 		$out = array();
-		foreach ( array( 'locked', 'path', 'ssh_db_path', 'url', 'db_host', 'db_user', 'db_port', 'db_name', 'db_password', 'ssh_db_host', 'ssh_db_user', 'ssh_db_path', 'ssh_host', 'ssh_user', 'ssh_port', 'remove_admin' ) as $postfix ) {
+		foreach ( array( 'locked', 'path', 'ssh_db_path', 'url', 'db_host', 'db_user', 'db_port', 'db_name', 'db_password', 'ssh_db_host', 'ssh_db_user', 'ssh_db_path', 'ssh_host', 'ssh_user', 'ssh_port', 'excludes' ) as $postfix ) {
 			$out[$postfix] = defined( self::config_constant( $postfix ) ) ? constant( self::config_constant( $postfix ) ) : null;
 		}
 		return $out;
