@@ -11,12 +11,11 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 
 	protected static $_env;
 	/**
-	 * Push local to remote
-	 *
-	 * @synopsis <environment>
-	 */
+   * Push local to remote
+   *
+   * @synopsis <environment>
+   */
 	public function push( $args = array() ) {
-
     $commands = array();
 
 		extract( self::_prepare_and_extract( $args, false ) );
@@ -25,11 +24,7 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 			return;
 		}
 
-		$siteurl = get_option( 'siteurl' );
-    $this->commands_for_database_dump(
-      array($siteurl => $url, untrailingslashit( ABSPATH ) => untrailingslashit( $path )),
-      $commands
-    );
+    $this->commands_for_database_dump($args, $commands);
 
     if($ssh_db_host) {
       $this->commands_for_database_import_thru_ssh($args, $commands);
@@ -39,14 +34,59 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 
     $commands[]= array('rm dump.sql', true);
 
+    $this->commands_for_pushing_files( $args, $commands );
+    $this->commands_post_push($args, $commands);
+    $this->_execute_commands($commands);
+	}
 
-		foreach ( $commands as $command_info ) {
-			list( $command, $exit_on_error ) = $command_info;
-			WP_CLI::line( $command );
-			WP_CLI::launch( $command, $exit_on_error );
+	public function push_files( $args = array() ) {
+		extract( self::_prepare_and_extract( $args, false ) );
+		if ( $locked === true ) {
+			WP_CLI::error( "$env environment is locked, you cannot push to it" );
+			return;
 		}
 
-		self::push_files( $args );
+    $commands = array();
+
+    $this->commands_for_pushing_files( $args, $commands );
+
+    $this->_execute_commands($commands, $args);
+	}
+
+  protected function commands_for_pushing_files($args, &$commands) {
+		extract( self::_prepare_and_extract( $args, false ) );
+
+		$dir = wp_upload_dir();
+		$remote_path = $path . '/';
+		$local_path = ABSPATH;
+    $excludes = array(
+      '.git',
+      'wp-content/cache',
+      'wp-content/_wpremote_backups',
+      'wp-config.php',
+    );
+    if(!$ssh_host) {
+       // in case the destination env is in a subfolder of the source env, we exclude the relative path to the destination to avoid infinite loop
+      $local_remote_path = realpath($remote_path);
+      if($local_remote_path) {
+
+        $local_path = realpath($local_path);
+        $local_remote_path = str_replace($local_path . '/', '', $local_remote_path);
+        $excludes[]= $local_remote_path;
+      }
+    }
+    $excludes = array_reduce( $excludes, function($acc, $value) { $acc.= "--exclude \"$value\" "; return $acc; } );
+
+		if ( $ssh_host ) {
+      $command = "rsync -avz -e 'ssh -p $ssh_port' $local_path $ssh_user@$ssh_host:$remote_path $excludes";
+    } else {
+      $command = "rsync -avz $local_path $remote_path $excludes";
+    }
+		$commands[]= array($command, true);
+  }
+
+  protected function commands_post_push($args, &$commands) {
+		extract( self::_prepare_and_extract( $args, false ) );
 		$const = strtoupper( $env ) . '_POST_SCRIPT';
 		if ( defined( $const ) ) {
 			$subcommand = constant( $const );
@@ -54,8 +94,7 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 			WP_CLI::line( $command );
 			WP_CLI::launch( $command );
 		}
-
-	}
+  }
 
   protected function commands_for_database_import_thru_ssh($args, &$commands)
   {
@@ -70,9 +109,14 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 		$commands[]= array( "mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql;", true );
   }
 
-  protected function commands_for_database_dump($searchreplaces, &$commands) {
+  protected function commands_for_database_dump($args, &$commands)
+  {
+		extract( self::_prepare_and_extract( $args, false ) );
+
+    $siteurl = get_option( 'siteurl' );
+    $searchreplaces = array($siteurl => $url, untrailingslashit( ABSPATH ) => untrailingslashit( $path ));
     $commands = array(
-      array( 'wp db export db_bk.sql', true ),
+      array( 'wp db export db_bk.sql', true )
     );
     foreach($searchreplaces as $search => $replace) {
       $commands[]= array( "wp search-replace $search $replace", true );
@@ -81,24 +125,15 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
     $commands[]= array( 'wp db import db_bk.sql', true );
     $commands[]= array( 'rm db_bk.sql', true );
   }
-	public function push_files( $args = array() ) {
-		extract( self::_prepare_and_extract( $args, false ) );
-		if ( $locked === true ) {
-			WP_CLI::error( "$env environment is locked, you cannot push to it" );
-			return;
-		}
 
-		if ( $ssh_host ) {
-			$dir = wp_upload_dir();
-			$remote_path = $path . '/';
-			$local_path = ABSPATH;
-
-			WP_CLI::line( sprintf( 'Running rsync from %s to %s:%s', $local_path, $ssh_host, $remote_path ) );
-			$command = sprintf( "rsync -avz -e 'ssh -p %s' %s %s@%s:%s --exclude '.git' --exclude 'wp-content/cache' --exclude 'wp-content/_wpremote_backups' --exclude 'wp-config.php'", $ssh_port, $local_path, $ssh_user, $ssh_host, $remote_path );
+  protected function _execute_commands($commands)
+  {
+		foreach ( $commands as $command_info ) {
+			list( $command, $exit_on_error ) = $command_info;
 			WP_CLI::line( $command );
-			WP_CLI::launch( $command );
+			WP_CLI::launch( $command, $exit_on_error );
 		}
-	}
+  }
 
 	public function pull( $args = array() ) {
 		extract( self::_prepare_and_extract( $args, false ) );
