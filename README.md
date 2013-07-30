@@ -23,22 +23,31 @@ For example if you want to create a staging environment, create all the necessar
 
 2. Available constants:
 
-| ._Name | ._description | mandatory | default |
-| [ENV]_DB_HOST | Database host for the environment | Yes | |
-| [ENV]_DB_USER | Database user for the environment | Yes | |
-| [ENV]_DB_NAME | Database name for the environment | Yes | |
-| [ENV]_DB_PORT | Database port for the environment | No | 3306|
-| [ENV]_DB_PASSWORD | Database password for the environment | No |
-| [ENV]_SSH_DB_HOST |  If you need to connect to the destination database through SSH | No | |
-| [ENV]_SSH_DB_USER |  If you need to connect to the destination database through SSH | No | |
-| [ENV]_SSH_DB_PATH |  If you need to connect to the destination database through SSH | No | |
-| [ENV]_SSH_DB_PORT |  If you need to connect to the destination database through SSH | No | 22 |
-| [ENV]_SSH_HOST | SSH host to sync with Rsync | No | |
-| [ENV]_SSH_USER | SSH user to sync with Rsync | No | |
-| [ENV]_SSH_PORT | SSH port to sync with Rsync | No | 22 |
-| [ENV]_PATH | Server path for the environment (used to reconfigure the Wordpress database) | Yes | |
-| [ENV]_URL| Url of the Wordpress install for this environment (used to reconfigure the Wordpress database) | Yes | |
-| [ENV]_EXCLUDES| Add files to exclude from rsync (a good idea is - temporarily I hope - to remove .htaccess to avoid manual flush rewrite)| No | |
+
+#### [ENV]_DB_HOST / USER / NAME / PORT / PASSWORD
+* Database dsn for the environment
+* _Mandatory_: Yes except for port (default 3306)
+
+#### [ENV]_SSH_DB_HOST / USER / PATH / PORT
+* If you need to connect to the destination database through SSH
+* _Mandatory_: No, port defaults to 22
+
+#### [ENV]_SSH_HOST / USER / PORT
+* SSH host to sync with Rsync
+* _Mandatory_: No, port defaults to 22
+
+#### [ENV]_PATH
+* Server path for the environment (used to reconfigure the Wordpress database)
+* _Mandatory_: Yes
+
+#### [ENV]_URL
+* Url of the Wordpress install for this environment (used to reconfigure the Wordpress database)
+* _Mandatory_: Yes
+
+#### [ENV]_EXCLUDES
+* Add files to exclude from rsync (a good idea is - temporarily I hope - to remove .htaccess to avoid manual flush rewrite). List must be separated buy semicolons.
+* _Mandatory_: No
+
 
 3. Local deployment
 
