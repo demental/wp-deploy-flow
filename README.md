@@ -1,27 +1,27 @@
-wp-deploy-flow
-==============
+# wp-deploy-flow
+
 
 A wp-cli command to deploy your wordpress instance.
 
-Dependencies
-============
+## Dependencies
+
 
 * Wordpress
 * wp-cli : http://wp-cli.org
 * rsync
 
-Install - Usage
-===============
+##  Install - Usage
+
 
 Check here : http://demental.info/blog/2013/04/09/a-decent-wordpress-deploy-workflow/
 
-1. Setting up environments
+### Setting up environments
 
 You can create as many environments as you want, all the environments must be setup in your wp-config.php file, with prefixed constants.
 
 For example if you want to create a staging environment, create all the necessary constants to configure it such as : STAGING_DB_HOST, STAGING_DB_USER, STAGING_URL and so on .... And copy all those configuration constats to all the other environments you want to interact with.
 
-2. Available constants:
+### Available constants:
 
 
 #### [ENV]_DB_HOST / USER / NAME / PORT / PASSWORD
@@ -49,14 +49,14 @@ For example if you want to create a staging environment, create all the necessar
 * _Mandatory_: No
 
 
-3. Local deployment
+### Local deployment
 
 wp-deploy-flow command is a nice tool to have a draft copy of your website, play with your draft, do whatever mistake and roll back from production to staging, or for preparing a big update and deploy in a snap.
 Although it's best to have separate servers for each environments, you still can have your draft environment on the same HTTP server, in a subfolder or a subdomain.
 For same-server environments, the configuration is much simpler : you just need to fill the PATH, URL, DB_HOST / USER / NAME / PASSWORD for each environment, SSH will not be used in this case.
 If one environemnt is in a subfolder of the other, it will be automatically excluded from rsync copy to avoid infinite recursion.
 
-4. Usage
+### Usage
 
 wp-deploy-flow comes includes:
 * four subcommands : pull,  pull_files, push and push_files
@@ -69,8 +69,8 @@ wp deploy <subcommand> <environment> [--dry-run]
 ```
 
 
-Testing
-=======
+### Testing
+
 
 Shame on me... No automated tests, this is manually tested, but I recently redesigned the code so it should be easier now to cover the project (at least the core classes : puller and pusher).
 
