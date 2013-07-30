@@ -13,9 +13,12 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 	/**
    * Push local to remote
    *
-   * @synopsis <environment>
+   * @synopsis <environment> [--dry-run]
    */
-	public function push( $args = array() ) {
+	public function push( $args = array(), $flags = array() ) {
+    $this->args = $args;
+    $this->flags = $flags;
+
     $commands = array();
 
 		extract( self::_prepare_and_extract( $args, false ) );
@@ -128,10 +131,14 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
 
   protected function _execute_commands($commands)
   {
+    if($this->flags['dry-run']) {
+      WP_CLI::line('DRY RUN....');
+    }
+
 		foreach ( $commands as $command_info ) {
 			list( $command, $exit_on_error ) = $command_info;
-			WP_CLI::line( $command );
-			WP_CLI::launch( $command, $exit_on_error );
+      WP_CLI::line( $command );
+      if(!$this->flags['dry-run']) WP_CLI::launch( $command, $exit_on_error );
 		}
   }
 
