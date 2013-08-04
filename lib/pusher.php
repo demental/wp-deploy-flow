@@ -50,9 +50,10 @@ class WP_Deploy_Flow_Pusher {
       $local_remote_path = realpath($remote_path);
       if($local_remote_path) {
 
-        $local_path = realpath($local_path);
+        $local_path = realpath($local_path) . '/';
         $local_remote_path = str_replace($local_path . '/', '', $local_remote_path);
         $excludes[]= $local_remote_path;
+        $remote_path = realpath($remote_path). '/';
       }
     }
     $excludes = array_reduce( $excludes, function($acc, $value) { $acc.= "--exclude \"$value\" "; return $acc; } );
