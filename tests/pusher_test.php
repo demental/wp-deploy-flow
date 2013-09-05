@@ -19,14 +19,14 @@ class PusherTest extends PHPUnit_Framework_TestCase {
     $this->assertEquals(9, count($result));
   }
 
-  public function testCommandsForFile()
+  public function testCommandsForFileReturnsOneCommand()
   {
     $test_params = array('excludes' => array());
     $subject = new Wp_Deploy_Flow_Pusher($test_params);
     $result = $subject->commands_for_files();
 
     $this->assertEquals(1, count($result));
-
+    $this->assertEquals(0, strpos($result[0][0], 'rsync'));
   }
 }
 
