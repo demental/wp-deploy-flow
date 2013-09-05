@@ -27,8 +27,8 @@ class WP_Deploy_Flow_Pusher {
 
   public function commands_for_files() {
     $commands = array();
-    return $this->_commands_for_files($commands);
-
+    $this->_commands_for_files($commands);
+    return $commands;
   }
 
   protected function _commands_for_files(&$commands) {
