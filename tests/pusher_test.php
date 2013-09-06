@@ -19,14 +19,21 @@ class PusherTest extends PHPUnit_Framework_TestCase {
     $this->assertEquals(9, count($result));
   }
 
-  public function testCommandsForFileReturnsOneCommand()
+  public function testCommandsForFileReturnsOneRsyncCommand()
   {
     $test_params = array('excludes' => array());
+    $expected = array(
+      array(
+        'rsync -avz / // --exclude ".git" --exclude "wp-content/cache" --exclude "wp-content/_wpremote_backups" --exclude "wp-config.php" --exclude "/"',
+         true)
+      );
+
     $subject = new Wp_Deploy_Flow_Pusher($test_params);
     $result = $subject->commands_for_files();
 
     $this->assertEquals(1, count($result));
-    $this->assertEquals(0, strpos($result[0][0], 'rsync'));
+    $this->assertEquals($expected, $result);
   }
-}
 
+
+}

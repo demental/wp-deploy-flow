@@ -56,8 +56,8 @@ class WP_Deploy_Flow_Pusher {
         $remote_path = realpath($remote_path). '/';
       }
     }
-    $excludes = array_reduce( $excludes, function($acc, $value) { $acc.= "--exclude \"$value\" "; return $acc; } );
-
+    $excludes = array_reduce( $excludes, function($acc, $value) { $acc[]= "--exclude \"$value\""; return $acc; } );
+    $excludes = implode(' ', $excludes);
 		if ( $ssh_host ) {
       $command = "rsync -avz -e 'ssh -p $ssh_port' --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $local_path $ssh_user@$ssh_host:$remote_path $excludes";
     } else {
