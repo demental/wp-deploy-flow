@@ -32,12 +32,11 @@ class WP_Deploy_Flow_Pusher {
   }
 
   protected function _commands_for_files(&$commands) {
-		extract( $this->params );
 
-		$remote_path = $path . '/';
+		$remote_path = $this->params['path'] . '/';
 		$local_path = ABSPATH;
     $excludes = array_merge(
-      $excludes,
+      $this->params['excludes'],
       array(
         '.git',
         'wp-content/cache',
@@ -45,7 +44,7 @@ class WP_Deploy_Flow_Pusher {
         'wp-config.php',
       )
     );
-    if(!$ssh_host) {
+    if(!$this->params['ssh_host']) {
        // in case the destination env is in a subfolder of the source env, we exclude the relative path to the destination to avoid infinite loop
       $local_remote_path = realpath($remote_path);
       if($local_remote_path) {
@@ -58,8 +57,8 @@ class WP_Deploy_Flow_Pusher {
     }
     $excludes = array_reduce( $excludes, function($acc, $value) { $acc[]= "--exclude \"$value\""; return $acc; } );
     $excludes = implode(' ', $excludes);
-		if ( $ssh_host ) {
-      $command = "rsync -avz -e 'ssh -p $ssh_port' --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $local_path $ssh_user@$ssh_host:$remote_path $excludes";
+		if ( $this->params['ssh_host'] ) {
+      $command = "rsync -avz -e 'ssh -p $this->params['ssh_port']' --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $local_path $this->params['ssh_user']@$this->params['ssh_host']:$remote_path $excludes";
     } else {
       $command = "rsync -avz $local_path $remote_path $excludes";
     }
