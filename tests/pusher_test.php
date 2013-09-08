@@ -20,8 +20,8 @@ class PusherTest extends PHPUnit_Framework_TestCase {
       'db_password' => 'dbpassword'
     );
   }
-	public function testCommandsReturnsArrayWithCommands() {
 
+  public function testCommandsReturnsArrayWithCommands() {
     $subject = new Wp_Deploy_Flow_Pusher($this->minimal_valid_params());
     $expected = array (
       array (
