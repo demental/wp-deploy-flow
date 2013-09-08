@@ -20,12 +20,50 @@ class PusherTest extends PHPUnit_Framework_TestCase {
       'db_password' => 'dbpassword'
     );
   }
-	function testCommandsCount() {
+	public function testCommandsReturnsArrayWithCommands() {
 
     $subject = new Wp_Deploy_Flow_Pusher($this->minimal_valid_params());
+    $expected = array (
+      array (
+        'wp db export db_bk.sql',
+        true,
+      ),
+      array (
+        'wp search-replace http://mysite.org/ ',
+        true,
+      ),
+      array (
+        'wp search-replace ABSPATH /path/to/remote',
+        true,
+      ),
+      array (
+        'wp db dump dump.sql',
+        true,
+      ),
+      array (
+        'wp db import db_bk.sql',
+        true,
+      ),
+      array (
+        'rm db_bk.sql',
+        true,
+      ),
+      array (
+        'mysql --user=dbuser --password=dbpassword --host=localhost  < dump.sql;',
+        true,
+      ),
+      array (
+        'rm dump.sql',
+        true,
+      ),
+      array (
+        'rsync -avz ABSPATH /path/to/remote/ --exclude ".git" --exclude "wp-content/cache" --exclude "wp-content/_wpremote_backups" --exclude "wp-config.php"',
+        true,
+      ),
+    );
 
     $result = $subject->commands();
-    $this->assertEquals(9, count($result));
+    $this->assertEquals($expected, $result);
   }
 
   public function testCommandsForFileReturnsOneRsyncCommand()
@@ -36,9 +74,8 @@ class PusherTest extends PHPUnit_Framework_TestCase {
          true)
       );
     $subject = new Wp_Deploy_Flow_Pusher($this->minimal_valid_params());
-    $result = $subject->commands_for_files();
 
-    $this->assertEquals(1, count($result));
+    $result = $subject->commands_for_files();
     $this->assertEquals($expected, $result);
   }
 
