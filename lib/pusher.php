@@ -1,6 +1,7 @@
 <?php
 
 class WP_Deploy_Flow_Pusher {
+  private $commands = array();
 
   public function __construct($params)
   {
@@ -9,33 +10,24 @@ class WP_Deploy_Flow_Pusher {
 
   public function commands()
   {
-    $commands = array();
-    $this->_commands_for_database_dump($commands);
+    $this->_commands_for_database_dump();
 
     if($this->params['ssh_db_host']) {
-      $this->_commands_for_database_import_thru_ssh($commands);
+      $this->_commands_for_database_import_thru_ssh();
     } else {
-      $this->_commands_for_database_import_locally($commands);
+      $this->_commands_for_database_import_locally();
     }
 
-    $commands[]= array('rm dump.sql', true);
+    $this->commands[]= array('rm dump.sql', true);
 
-    $this->_commands_for_files( $commands );
+    $this->commands_for_files();
 
-    $post_push = $this->_post_push_if_exists();
-    if($post_push) {
-      $commands[] = $post_push;
-    }
-    return $commands;
+    $this->_post_push_if_exists();
+
+    return $this->commands;
   }
 
   public function commands_for_files() {
-    $commands = array();
-    $this->_commands_for_files($commands);
-    return $commands;
-  }
-
-  protected function _commands_for_files(&$commands) {
 
 		$remote_path = $this->params['path'] . '/';
 		$local_path = ABSPATH;
@@ -64,51 +56,51 @@ class WP_Deploy_Flow_Pusher {
 		if ( $this->params['ssh_host'] ) {
       $command = "rsync -avz -e 'ssh{$this->_ssh_port_option()} --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $local_path {$this->_ssh_uri()}:$remote_path $excludes";
     } else {
-      $command = "rsync -avz $local_path $remote_path $excludes";
+      $command= "rsync -avz $local_path $remote_path $excludes";
     }
-		$commands[]= array($command, true);
+    $this->commands[]= array($command, true);
+    return $this->commands;
   }
 
   protected function _post_push_if_exists() {
-    if($this->params['post_push_command']) return $this->_command_post_push();
+    if($this->params['post_push_command']) $this->_command_post_push();
   }
+
   protected function _command_post_push()
   {
     if($this->params['ssh_host']) {
-      return array("ssh {$this->_ssh_uri()}{$this->_ssh_port_option()} \"{$this->params['post_push_command']}\"", true);
+      $this->commands[]= array("ssh {$this->_ssh_uri()}{$this->_ssh_port_option()} \"{$this->params['post_push_command']}\"", true);
     } else {
-      return array($this->params['post_push_command'], true);
+      $this->commands[]= array($this->params['post_push_command'], true);
     }
   }
 
-  protected function _commands_for_database_import_thru_ssh(&$commands)
+  protected function _commands_for_database_import_thru_ssh()
   {
 		extract( $this->params );
-		$commands[]= array( "scp -P $ssh_port dump.sql $ssh_db_user@$ssh_db_host:$ssh_db_path", true );
-		$commands[]= array( "ssh $ssh_db_user@$ssh_db_host -p $ssh_db_port \"cd $ssh_db_path; mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql; rm dump.sql\"", true );
+    $this->commands[]= array( "scp -P $ssh_port dump.sql $ssh_db_user@$ssh_db_host:$ssh_db_path", true );
+    $this->commands[]= array( "ssh $ssh_db_user@$ssh_db_host -p $ssh_db_port \"cd $ssh_db_path; mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql; rm dump.sql\"", true );
   }
 
-  protected function _commands_for_database_import_locally(&$commands)
+  protected function _commands_for_database_import_locally()
   {
 		extract( $this->params );
-		$commands[]= array( "mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql;", true );
+    $this->commands[]= array( "mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql;", true );
   }
 
-  protected function _commands_for_database_dump(&$commands)
+  protected function _commands_for_database_dump()
   {
 		extract( $this->params );
 
     $siteurl = get_option( 'siteurl' );
     $searchreplaces = array($siteurl => $url, untrailingslashit( ABSPATH ) => untrailingslashit( $path ));
-    $commands = array(
-      array( 'wp db export db_bk.sql', true )
-    );
+    $this->commands[]= array( 'wp db export db_bk.sql', true );
     foreach($searchreplaces as $search => $replace) {
-      $commands[]= array( "wp search-replace $search $replace", true );
+      $this->commands[]= array( "wp search-replace $search $replace", true );
     }
-    $commands[]= array( 'wp db dump dump.sql', true );
-    $commands[]= array( 'wp db import db_bk.sql', true );
-    $commands[]= array( 'rm db_bk.sql', true );
+    $this->commands[]= array( 'wp db dump dump.sql', true );
+    $this->commands[]= array( 'wp db import db_bk.sql', true );
+    $this->commands[]= array( 'rm db_bk.sql', true );
   }
 
   protected function _ssh_uri()
