@@ -18,16 +18,14 @@ class WP_Deploy_Flow_Pusher {
       $this->_commands_for_database_import_locally();
     }
 
-    $this->commands[]= array('rm dump.sql', true);
+    $this->command_for_files();
 
-    $this->commands_for_files();
-
-    $this->_post_push_if_exists();
+    $this->_command_post_push_if_exists();
 
     return $this->commands;
   }
 
-  public function commands_for_files() {
+  public function command_for_files() {
 
 		$remote_path = $this->params['path'] . '/';
 		$local_path = ABSPATH;
@@ -62,7 +60,7 @@ class WP_Deploy_Flow_Pusher {
     return $this->commands;
   }
 
-  protected function _post_push_if_exists() {
+  protected function _command_post_push_if_exists() {
     if($this->params['post_push_command']) $this->_command_post_push();
   }
 
@@ -80,12 +78,14 @@ class WP_Deploy_Flow_Pusher {
 		extract( $this->params );
     $this->commands[]= array( "scp -P $ssh_port dump.sql $ssh_db_user@$ssh_db_host:$ssh_db_path", true );
     $this->commands[]= array( "ssh $ssh_db_user@$ssh_db_host -p $ssh_db_port \"cd $ssh_db_path; mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql; rm dump.sql\"", true );
+    $this->commands[]= array('rm dump.sql', true);
   }
 
   protected function _commands_for_database_import_locally()
   {
 		extract( $this->params );
     $this->commands[]= array( "mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql;", true );
+    $this->commands[]= array('rm dump.sql', true);
   }
 
   protected function _commands_for_database_dump()

@@ -66,7 +66,7 @@ class PusherTest extends PHPUnit_Framework_TestCase {
     $this->assertEquals($expected, $result);
   }
 
-  public function testCommandsForFileReturnsOneRsyncCommand()
+  public function testCommandForFileReturnsOneRsyncCommand()
   {
     $expected = array(
       array(
@@ -75,15 +75,15 @@ class PusherTest extends PHPUnit_Framework_TestCase {
       );
     $subject = new Wp_Deploy_Flow_Pusher($this->minimal_valid_params());
 
-    $result = $subject->commands_for_files();
+    $result = $subject->command_for_files();
     $this->assertEquals($expected, $result);
   }
 
-  public function testCommandsForFileUsesSshForRsyncWhenSsh_hostIsSet()
+  public function testCommandForFileUsesSshForRsyncWhenSsh_hostIsSet()
   {
     $test_params = array_merge($this->minimal_valid_params(), array('ssh_host' => 'a_ssh_host'));
     $subject = new Wp_Deploy_Flow_Pusher($test_params);
-    $result = $subject->commands_for_files();
+    $result = $subject->command_for_files();
     $this->assertRegexp("`^rsync \-avz \-e 'ssh`",$result[0][0]);
   }
 
