@@ -21,7 +21,11 @@ class WP_Deploy_Flow_Pusher {
     $commands[]= array('rm dump.sql', true);
 
     $this->_commands_for_files( $commands );
-    $this->_commands_post_push($commands);
+
+    $post_push = $this->_post_push_if_exists();
+    if($post_push) {
+      $commands[] = $post_push;
+    }
     return $commands;
   }
 
@@ -58,27 +62,30 @@ class WP_Deploy_Flow_Pusher {
     $excludes = array_reduce( $excludes, function($acc, $value) { $acc[]= "--exclude \"$value\""; return $acc; } );
     $excludes = implode(' ', $excludes);
 		if ( $this->params['ssh_host'] ) {
-      $command = "rsync -avz -e 'ssh -p $this->params['ssh_port']' --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $local_path $this->params['ssh_user']@$this->params['ssh_host']:$remote_path $excludes";
+      $command = "rsync -avz -e 'ssh{$this->_ssh_port_option()} --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r $local_path {$this->_ssh_uri()}:$remote_path $excludes";
     } else {
       $command = "rsync -avz $local_path $remote_path $excludes";
     }
 		$commands[]= array($command, true);
   }
 
-  protected function _commands_post_push(&$commands) {
-		extract( $this->params );
-		$const = strtoupper( $env ) . '_POST_SCRIPT';
-		if ( defined( $const ) ) {
-			$subcommand = constant( $const );
-			$commands[]= array("ssh $ssh_user@$ssh_host -p $ssh_port \"$subcommand\"", true);
-		}
+  protected function _post_push_if_exists() {
+    if($this->params['post_push_command']) return $this->_command_post_push();
+  }
+  protected function _command_post_push()
+  {
+    if($this->params['ssh_host']) {
+      return array("ssh {$this->_ssh_uri()}{$this->_ssh_port_option()} \"{$this->params['post_push_command']}\"", true);
+    } else {
+      return array($this->params['post_push_command'], true);
+    }
   }
 
   protected function _commands_for_database_import_thru_ssh(&$commands)
   {
 		extract( $this->params );
 		$commands[]= array( "scp -P $ssh_port dump.sql $ssh_db_user@$ssh_db_host:$ssh_db_path", true );
-		$commands[]= array( "ssh $ssh_db_user@$ssh_db_host -p $ssh_port \"cd $ssh_db_path; mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql; rm dump.sql\"", true );
+		$commands[]= array( "ssh $ssh_db_user@$ssh_db_host -p $ssh_db_port \"cd $ssh_db_path; mysql --user=$db_user --password=$db_password --host=$db_host $db_name < dump.sql; rm dump.sql\"", true );
   }
 
   protected function _commands_for_database_import_locally(&$commands)
@@ -104,4 +111,12 @@ class WP_Deploy_Flow_Pusher {
     $commands[]= array( 'rm db_bk.sql', true );
   }
 
+  protected function _ssh_uri()
+  {
+    return "{$this->params['ssh_user']}@{$this->params['ssh_host']}";
+  }
+  public function _ssh_port_option()
+  {
+    return $this->params['ssh_port'] ? " -p {$this->params['ssh_port']}" : "";
+  }
 }
