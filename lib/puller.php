@@ -26,8 +26,8 @@ class WP_Deploy_Flow_Puller {
 
   public function commands_for_files() {
     $commands = array();
-    return $this->_commands_for_files($commands);
-
+    $this->_commands_for_files($commands);
+    return $commands;
   }
 
   protected function _commands_for_files(&$commands) {
@@ -42,6 +42,7 @@ class WP_Deploy_Flow_Puller {
       $excludes,
       array(
         '.git',
+        '.sass-cache',
         'wp-content/cache',
         'wp-content/_wpremote_backups',
         'wp-config.php',
