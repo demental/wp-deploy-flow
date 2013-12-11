@@ -27,7 +27,10 @@ class WP_Deploy_Flow_Pusher {
 
   public function commands_for_files() {
     $commands = array();
-    return $this->_commands_for_files($commands);
+    $commands[]= array('rm dump.sql', true);
+    $this->_commands_for_files( $commands );
+    $this->_commands_post_push( $commands );
+    return $commands;
 
   }
 
@@ -40,6 +43,7 @@ class WP_Deploy_Flow_Pusher {
       $excludes,
       array(
         '.git',
+        '.sass-cache',
         'wp-content/cache',
         'wp-content/_wpremote_backups',
         'wp-config.php',
