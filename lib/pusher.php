@@ -27,7 +27,6 @@ class WP_Deploy_Flow_Pusher {
 
   public function commands_for_files() {
     $commands = array();
-    $commands[]= array('rm dump.sql', true);
     $this->_commands_for_files( $commands );
     $this->_commands_post_push( $commands );
     return $commands;
