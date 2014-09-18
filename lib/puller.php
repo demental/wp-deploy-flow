@@ -69,12 +69,17 @@ class WP_Deploy_Flow_Puller {
 
   protected function _commands_for_database_import_thru_ssh(&$commands)
   {
-		extract( $this->params );
+	extract( $this->params );
+	/* @var $db_host $this->params['db_host'] */
+	/* @var $db_port $this->params['db_port'] */
+	/* @var $ssh_user $this->params['ssh_user'] */
+	/* @var $ssh_host $this->params['ssh_host'] */
+	/* @var $ssh_port $this->params['ssh_port'] */
     $host = $db_host . ':' . $db_port;
 
     $dist_path  = constant( WP_Deploy_Flow_Command::config_constant( 'path' ) ) . '/';
     $commands[]= array("ssh $ssh_user@$ssh_host -p $ssh_port \"cd $dist_path;wp db export dump.sql;\"", true);
-    $commands[]= array("scp $ssh_user@$ssh_host:$dist_path/dump.sql .", true);
+    $commands[]= array("scp $ssh_user@$ssh_host:${dist_path}dump.sql .", true);
     $commands[]= array("ssh $ssh_user@$ssh_host -p $ssh_port \"cd $dist_path; rm dump.sql;\"", true);
   }
 
