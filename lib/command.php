@@ -63,23 +63,23 @@ class WP_Deploy_Flow_Command extends WP_CLI_Command {
     $this->_execute_commands($commands, $args);
 	}
 
-  protected function _pull_command($command_name, $args, $flags)
-  {
-    $this->params = self::_prepare_and_extract( $args );
-    $this->flags = $flags;
-    extract($this->params);
+  	protected function _pull_command( $command_name, $args, $flags ) {
+		$this->params = self::_prepare_and_extract( $args );
+		$this->flags  = $flags;
+		extract( $this->params );
+		/* @var $env $this->params['env'] */
 
-		$const = strtoupper( ENVIRONMENT ) . '_LOCKED';
+		$const = strtoupper( $env ) . '_LOCKED';
 		if ( constant( $const ) === true ) {
-			return WP_CLI::error( ENVIRONMENT . ' env is locked, you can not pull to your local copy' );
+			return WP_CLI::error( $env . ' env is locked, you can not pull to your local copy' );
 		}
 
-    require 'puller.php';
+		require 'puller.php';
 
-    $reflectionMethod = new ReflectionMethod('WP_Deploy_Flow_Puller', $command_name);
-    $commands = $reflectionMethod->invoke(new WP_Deploy_Flow_Puller($this->params));
+		$reflectionMethod = new ReflectionMethod( 'WP_Deploy_Flow_Puller', $command_name );
+		$commands         = $reflectionMethod->invoke( new WP_Deploy_Flow_Puller( $this->params ) );
 
-    $this->_execute_commands($commands, $args);
+		$this->_execute_commands( $commands, $args );
 	}
 
   protected function _execute_commands($commands)
